@@ -1,0 +1,132 @@
+==============
+Tagging Engine
+==============
+
+    >>> from zojax.tagging.engine import TaggingEngine
+    >>> from zojax.tagging.interfaces import ITaggingEngine
+    >>> from zope.interface.verify import verifyClass, verifyObject
+
+    >>> verifyClass(ITaggingEngine, TaggingEngine)
+    True
+
+    >>> engine = TaggingEngine()
+
+    >>> verifyObject(ITaggingEngine, engine)
+    True
+
+    >>> info = {
+    ...     1: ('tag1', 'tag2', 'tag3'),
+    ...     2: ('tag1', 'tag4'),
+    ...     3: ('tag1', 'tag2'),
+    ...     4: ('tag2', 'tag3'),
+    ...     5: ('tag2', 'tag4'),
+    ...     6: ('tag3', 'tag4', 'tag5')}
+
+    >>> for oid, tags in info.items():
+    ...     engine.update(oid, tags)
+
+
+    >>> 'tag1' in engine
+    True
+
+    >>> bool(engine)
+    True
+
+    >>> engine.tagsCount
+    5
+
+    >>> engine.itemsCount
+    6
+
+
+getItems
+--------
+
+    >>> engine.getItems(('tag1',))
+    BTrees.IFBTree.IFBucket([(1, 3.0), (2, 3.0), (3, 3.0)])
+
+    >>> engine.getItems(('tag1', 'tag2'))
+    BTrees.IFBTree.IFBucket([(1, 7.0), (2, 3.0), (3, 7.0), (4, 4.0), (5, 4.0)])
+
+    >>> engine.getItems(('tag3', 'tag4'))
+    BTrees.IFBTree.IFBucket([(1, 3.0), (2, 3.0), (4, 3.0), (5, 3.0), (6, 6.0)])
+
+
+getUniqueItems
+--------------
+
+    >>> engine.getUniqueItems(('tag1',))
+    BTrees.IFBTree.IFBucket([(1, 3.0), (2, 3.0), (3, 3.0)])
+
+    >>> engine.getUniqueItems(('tag1', 'tag2'))
+    BTrees.IFBTree.IFBucket([(1, 7.0), (3, 7.0)])
+
+    >>> engine.getUniqueItems(('tag2', 'tag4'))
+    BTrees.IFBTree.IFBucket([(5, 7.0)])
+
+
+getTagCloud
+-----------
+
+    >>> list(engine.getTagCloud())
+    [(16.666666666666668, 'tag5'), (50.0, 'tag4'), (50.0, 'tag1'), (50.0, 'tag3'), (66.666666666666671, 'tag2')]
+
+    >>> list(engine.getTagCloud(reverse=True))
+    [(66.666666666666671, 'tag2'), (50.0, 'tag3'), (50.0, 'tag1'), (50.0, 'tag4'), (16.666666666666668, 'tag5')]
+
+
+getItemsTagCloud
+----------------
+
+    >>> list(engine.getItemsTagCloud((10,)))
+    []
+
+    >>> list(engine.getItemsTagCloud((1, 2, 5, 6)))
+    [('tag4', 50.0), ('tag5', 16.666666666666668), ('tag1', 50.0), ('tag2', 66.666666666666671), ('tag3', 50.0)]
+
+
+getFrequency
+------------
+
+    >>> list(engine.getFrequency(('tag1', 'tag2', 'tag4')))
+    [('tag1', 3.0), ('tag2', 4.0), ('tag4', 3.0)]
+
+
+update
+------
+
+    >>> engine.update(4, ('tag1',))
+
+    >>> list(engine.getTagCloud())
+    [(16.666666666666668, 'tag5'), (33.333333333333336, 'tag3'), (50.0, 'tag4'), (50.0, 'tag2'), (66.666666666666671, 'tag1')]
+
+remove
+------
+
+    >>> engine.remove(1)
+
+    >>> engine.getItems(('tag1',))
+    BTrees.IFBTree.IFBucket([(2, 3.0), (3, 3.0), (4, 3.0)])
+
+    >>> list(engine.getTagCloud())
+    [(20.0, 'tag5'), (20.0, 'tag3'), (40.0, 'tag2'), (60.0, 'tag4'), (60.0, 'tag1')]
+
+    >>> engine.remove(6)
+    >>> 'tag5' in engine
+    False
+
+    >>> list(engine.getTagCloud())
+    [(50.0, 'tag4'), (50.0, 'tag2'), (75.0, 'tag1')]
+
+
+Index
+=====
+
+    >>> from zojax.tagging.index import TagIndex
+
+    >>> index = TagIndex(engine)
+    >>> index.apply({'any_of': ('tag1',)})
+    BTrees.IFBTree.IFBucket([(2, 3.0), (3, 3.0), (4, 3.0)])
+
+    >>> index.apply({'all_of': ('tag1', 'tag2')})
+    BTrees.IFBTree.IFBucket([(3, 5.0)])

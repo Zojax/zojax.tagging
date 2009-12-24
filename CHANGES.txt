@@ -1,0 +1,38 @@
+=======
+CHANGES
+=======
+
+1.1.1 (Unreleased)
+------------------
+
+
+1.1.0 (2009-08-11)
+------------------
+
+- Do not use z3c.autoinclude
+
+- Copyright changed to 'Zope Foundation and Contributors'
+
+
+1.0.3 (2009-03-31)
+------------------
+
+- Fixed findObjectsMatching method in generations
+
+
+1.0.2 (2009-03-31)
+------------------
+
+- Fixed large integer hash problem
+
+
+1.0.1 (2009-03-11)
+------------------
+
+- Added `reverse` for getTagCloud method
+
+
+1.0.0 (2009-01-14)
+------------------
+
+- Initial release.
