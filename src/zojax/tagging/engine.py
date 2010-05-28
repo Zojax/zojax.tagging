@@ -182,7 +182,7 @@ class TaggingEngine(Persistent):
         percent = total / 100.0
 
         for tag in tags:
-            yield self.tagsmap.get(tag), weights[tag] / percent
+            yield weights[tag] / percent, self.tagsmap.get(tag)
 
     def getFrequency(self, tags):
         tagsmap = self.tagsmap
