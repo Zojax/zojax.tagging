@@ -51,11 +51,17 @@ class TaggingEngine(Persistent):
         self.weights = OOSet()
         self.tag_weight = LFBTree()
 
+    def getHash(self, str):
+        res = hash(str)
+        while abs(res) > 0xFFFFFFFF:
+            res = int(res/0xFFFFFFFF)
+        return res
+
     def update(self, oid, tags):
         self.remove(oid)
 
         for tag in tags:
-            htag = hash(tag)
+            htag = self.getHash(tag)
             self.tagsmap[htag] = tag
 
             # add oid -> tag
@@ -122,7 +128,7 @@ class TaggingEngine(Persistent):
 
         weight, result = 0, LFBTree()
         for tag in tags:
-            htag = hash(tag)
+            htag = self.getHash(tag)
             if htag in oids:
                 weight, result = weightedUnion(
                     oids.get(htag), result, weights.get(htag), weight)
@@ -135,7 +141,7 @@ class TaggingEngine(Persistent):
 
         weight, result = 1.0, None
         for tag in tags:
-            htag = hash(tag)
+            htag = self.getHash(tag)
             if htag in oids:
                 if result is None:
                     weight, result = weightedUnion(
@@ -189,10 +195,10 @@ class TaggingEngine(Persistent):
         tag_weight = self.tag_weight
 
         for tag in tags:
-            yield (tag, tag_weight.get(hash(tag), 0))
+            yield (tag, tag_weight.get(self.getHash(tag), 0))
 
     def __nonzero__(self):
         return bool(self.tag_oids)
 
     def __contains__(self, tag):
-        return hash(tag) in self.tagsmap
+        return self.getHash(tag) in self.tagsmap
