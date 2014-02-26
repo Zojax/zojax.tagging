@@ -15,6 +15,8 @@
 
 $Id$
 """
+import struct
+
 from BTrees.OOBTree import OOSet
 from BTrees.IFBTree import IFBucket
 from BTrees.LOBTree import LOBTree
@@ -24,6 +26,11 @@ from BTrees.LFBTree import LFBTree, LFSet, weightedUnion, weightedIntersection
 from zope import interface
 from persistent import Persistent
 from interfaces import ITaggingEngine
+
+
+
+def c_mul(a, b):
+    return eval(hex((long(a) * b) & 0xFFFFFFFFL)[:-1])
 
 
 class TaggingEngine(Persistent):
@@ -52,9 +59,22 @@ class TaggingEngine(Persistent):
         self.tag_weight = LFBTree()
 
     def getHash(self, str):
+        if not str:
+            return 0 # empty
+
         res = hash(str)
-        while abs(res) > 0xFFFFFFFF:
-            res = int(res/0xFFFFFFFF)
+
+        # NOTE: workaround for 64bit
+        if struct.calcsize("P") * 8 == 64:
+            res = ord(str[0]) << 7
+            for char in str:
+                res = c_mul(1000003, res) ^ ord(char)
+            res = res ^ len(str)
+            if res == -1:
+                res = -2
+            if res >= 2**31:
+                res -= 2**32
+
         return res
 
     def update(self, oid, tags):
